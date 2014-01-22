@@ -6,8 +6,6 @@
 #ifndef sha_256_h
 #define sha_256_h
 
-//#include <cstddef>
-//#include <cstdint>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -80,7 +78,8 @@ class SHA256_State
 
         void update(const my_uint32_t M[16])
         {
-            const uint32_t K[64] = {
+            const uint32_t K[64] =
+            {
                 0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
                 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
                 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -103,7 +102,7 @@ class SHA256_State
 
             for (unsigned t = 0; t < 64; ++t)
             {
-                W[t] = (t < 16) ? M[t] : sigma_1_256(W[t - 2]) + W[t - 7] + sigma_0_256(W[t - 15]) + W[t - 16];
+                W[t] = (t < 16) ? M[t] : (sigma_1_256(W[t - 2]) + W[t - 7] + sigma_0_256(W[t - 15]) + W[t - 16]);
             }
 
             my_uint32_t a = H[0];
@@ -209,9 +208,9 @@ class SHA256
             }
         }
 
-        void add_bytes(const uint8_t * bytes, const size_t num_bytes)
+        void add_bytes(const uint8_t * bytes, const std::size_t num_bytes)
         {
-            for (size_t i = 0; i < num_bytes; ++i)
+            for (std::size_t i = 0; i < num_bytes; ++i)
             {
                 add_byte(bytes[i]);
             }

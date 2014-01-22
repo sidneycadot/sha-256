@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <ostream>
 
+template <typename uint32_value_t>
 class xuint32_t
 {
     public:
@@ -20,11 +21,6 @@ class xuint32_t
         xuint32_t(const uint32_t & vi) : v(vi) {}
 
         xuint32_t(const xuint32_t & rhs) : v(rhs.v) {}
-
-        uint32_t value() const
-        {
-            return v;
-        }
 
         xuint32_t & operator = (const xuint32_t & rhs)
         {
@@ -75,13 +71,13 @@ class xuint32_t
 
     private:
 
-        uint32_t v;
-};
+        uint32_value_t v;
 
-std::ostream & operator << (std::ostream & os, const xuint32_t & x)
-{
-    os << x.value();
-    return os;
-}
+    friend std::ostream & operator << (std::ostream & os, const xuint32_t<uint32_value_t> & x)
+    {
+        os << x.v;
+        return os;
+    }
+};
 
 #endif // xuint32_h_t
