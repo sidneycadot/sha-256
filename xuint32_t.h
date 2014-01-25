@@ -22,6 +22,8 @@ class xuint32_t
 
         xuint32_t(const xuint32_t & rhs) : v(rhs.v) {}
 
+        xuint32_t(const uint32_value_t & vi) : v(vi) {}
+
         xuint32_t & operator = (const xuint32_t & rhs)
         {
             v = rhs.v;
