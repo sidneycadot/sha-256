@@ -7,20 +7,34 @@
 #define expr_uint32_h_t
 
 #include <ostream>
-//#include <cstdint>
-//#include <ostream>
 #include <memory>
 
-class expr_uint32_t;
-
-typedef std::shared_ptr<const expr_uint32_t> expr_uint32_ptr_t;
+class expr_t
+{
+};
 
 class expr_uint32_t
 {
-    expr_uint32_t(const uint32_t & vi)
-    {
-        (void)vi;
-    }
+    public:
+
+        expr_uint32_t()
+        {
+        }
+
+        expr_uint32_t(const uint32_t & vi)
+        {
+            (void)vi;
+        }
+
+        expr_uint32_t & operator = (const expr_uint32_t & rhs)
+        {
+            (void)rhs;
+            return *this;
+        }
+
+    private:
+
+        std::shared_ptr<expr_t> v;
 
     friend std::ostream & operator << (std::ostream & os, const expr_uint32_t & expr)
     {
@@ -31,57 +45,58 @@ class expr_uint32_t
 
 };
 
-expr_uint32_ptr_t operator >> (const expr_uint32_ptr_t & lhs, const int & n)
+expr_uint32_t operator >> (const expr_uint32_t & lhs, const int & n)
 {
     (void)lhs;
     (void)n;
-    return expr_uint32_ptr_t();
+    return expr_uint32_t();
 }
 
-expr_uint32_ptr_t operator << (const expr_uint32_ptr_t & lhs, const int & n)
+expr_uint32_t operator << (const expr_uint32_t & lhs, const int & n)
 {
     (void)lhs;
     (void)n;
-    return expr_uint32_ptr_t();
+    return expr_uint32_t();
 }
 
-expr_uint32_ptr_t operator ^ (const expr_uint32_ptr_t & lhs, const expr_uint32_ptr_t & rhs)
+expr_uint32_t operator ^ (const expr_uint32_t & lhs, const expr_uint32_t & rhs)
 {
     (void)lhs;
     (void)rhs;
-    return expr_uint32_ptr_t();
+    return expr_uint32_t();
 }
 
-expr_uint32_ptr_t operator & (const expr_uint32_ptr_t & lhs, const expr_uint32_ptr_t & rhs)
+expr_uint32_t operator & (const expr_uint32_t & lhs, const expr_uint32_t & rhs)
 {
     (void)lhs;
     (void)rhs;
-    return expr_uint32_ptr_t();
+    return expr_uint32_t();
 }
 
-expr_uint32_ptr_t operator + (const expr_uint32_ptr_t & lhs, const expr_uint32_ptr_t & rhs)
+expr_uint32_t operator + (const expr_uint32_t & lhs, const expr_uint32_t & rhs)
 {
     (void)lhs;
     (void)rhs;
-    return expr_uint32_ptr_t();
+    return expr_uint32_t();
 }
 
-expr_uint32_ptr_t operator ~ (const expr_uint32_ptr_t & rhs)
+expr_uint32_t operator ~ (const expr_uint32_t & rhs)
 {
     (void)rhs;
-    return expr_uint32_ptr_t();
+    return expr_uint32_t();
 }
 
-expr_uint32_ptr_t operator += (const expr_uint32_ptr_t & lhs, const expr_uint32_ptr_t & rhs)
+expr_uint32_t operator += (const expr_uint32_t & lhs, const expr_uint32_t & rhs)
 {
     (void)lhs;
     (void)rhs;
-    return expr_uint32_ptr_t();
+    return lhs;
 }
 
-std::ostream & operator << (std::ostream & os, const expr_uint32_ptr_t expr)
+std::ostream & operator << (std::ostream & os, const expr_uint32_t expr)
 {
-    os << *expr;
+    (void)expr;
+    os << "expr";
     return os;
 }
 
