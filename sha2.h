@@ -1,15 +1,19 @@
 
-///////////////
-// sha-256.h //
-///////////////
+////////////
+// sha2.h //
+////////////
 
-#ifndef sha_256_h
-#define sha_256_h
+#ifndef sha2_h
+#define sha2_h
 
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <cassert>
+#include <sstream>
+#include <vector>
+#include <algorithm>
 
 namespace // anonymous namespace
 {
@@ -49,6 +53,7 @@ struct SHA256_Algorithm
     static const unsigned SizeBits  =  64;
 
     static const unsigned NumberOfBaseTypeBits = 32;
+    static const unsigned NumberOfStateBits    = 256;
 
     static const basetype K[64];
 
@@ -105,6 +110,7 @@ struct SHA512_Algorithm
     static const unsigned SizeBits  =  128;
 
     static const unsigned NumberOfBaseTypeBits = 64;
+    static const unsigned NumberOfStateBits    = 512;
 
     static const basetype K[80];
 
@@ -161,16 +167,26 @@ struct SHA224_Traits
 
     static const unsigned NumberOfHashBits = 224;
 
-    static constexpr uint32_t init[8] =
+    static const bool isTruncated = false;
+
+    static void init(basetype H[8])
     {
-        0xc1059ed8, // TODO: figure out where these come from
-        0x367cd507,
-        0x3070dd17,
-        0xf70e5939,
-        0xffc00b31,
-        0x68581511,
-        0x64f98fa7,
-        0xbefa4fa4
+        const uint32_t initial_values[8] =
+        {
+            0xc1059ed8, // the second 32 bits of the fractional parts of the square roots of the ninth through sixteenth prime numbers.
+            0x367cd507,
+            0x3070dd17,
+            0xf70e5939,
+            0xffc00b31,
+            0x68581511,
+            0x64f98fa7,
+            0xbefa4fa4
+        };
+
+        for (unsigned i = 0; i < 8; ++i)
+        {
+            H[i] = initial_values[i];
+        }
     };
 };
 
@@ -179,18 +195,28 @@ struct SHA256_Traits
 {
     typedef SHA256_Algorithm<basetype> BaseAlgorithm;
 
+    static const bool isTruncated = false;
+
     static const unsigned NumberOfHashBits = 256;
 
-    static constexpr uint32_t init[8] =
+    static void init(basetype H[8])
     {
-        0x6a09e667, // the first 32 bits of the fractional parts of the square roots of the first eight prime numbers.
-        0xbb67ae85,
-        0x3c6ef372,
-        0xa54ff53a,
-        0x510e527f,
-        0x9b05688c,
-        0x1f83d9ab,
-        0x5be0cd19
+        const uint32_t initial_values[8] =
+        {
+            0x6a09e667, // the first 32 bits of the fractional parts of the square roots of the first eight prime numbers.
+            0xbb67ae85,
+            0x3c6ef372,
+            0xa54ff53a,
+            0x510e527f,
+            0x9b05688c,
+            0x1f83d9ab,
+            0x5be0cd19
+        };
+
+        for (unsigned i = 0; i < 8; ++i)
+        {
+            H[i] = initial_values[i];
+        }
     };
 };
 
@@ -199,18 +225,28 @@ struct SHA384_Traits
 {
     typedef SHA512_Algorithm<basetype> BaseAlgorithm;
 
+    static const bool isTruncated = false;
+
     static const unsigned NumberOfHashBits = 384;
 
-    static constexpr uint64_t init[8] =
+    static void init(basetype H[8])
     {
-        0xcbbb9d5dc1059ed8, // the first 64 bits of the fractional parts of the square roots of the ninth through sixteenth prime numbers.
-        0x629a292a367cd507,
-        0x9159015a3070dd17,
-        0x152fecd8f70e5939,
-        0x67332667ffc00b31,
-        0x8eb44a8768581511,
-        0xdb0c2e0d64f98fa7,
-        0x47b5481dbefa4fa4
+        const uint64_t initial_values[8] =
+        {
+            0xcbbb9d5dc1059ed8, // the first 64 bits of the fractional parts of the square roots of the ninth through sixteenth prime numbers.
+            0x629a292a367cd507,
+            0x9159015a3070dd17,
+            0x152fecd8f70e5939,
+            0x67332667ffc00b31,
+            0x8eb44a8768581511,
+            0xdb0c2e0d64f98fa7,
+            0x47b5481dbefa4fa4
+        };
+
+        for (unsigned i = 0; i < 8; ++i)
+        {
+            H[i] = initial_values[i];
+        }
     };
 };
 
@@ -219,38 +255,58 @@ struct SHA512_Traits
 {
     typedef SHA512_Algorithm<basetype> BaseAlgorithm;
 
+    static const bool isTruncated = false;
+
     static const unsigned NumberOfHashBits = 512;
 
-    static constexpr uint64_t init[8] =
+    static void init(basetype H[8])
     {
-        0x6a09e667f3bcc908, // the first 64 bits of the fractional parts of the square roots of the first eight prime numbers.
-        0xbb67ae8584caa73b,
-        0x3c6ef372fe94f82b,
-        0xa54ff53a5f1d36f1,
-        0x510e527fade682d1,
-        0x9b05688c2b3e6c1f,
-        0x1f83d9abfb41bd6b,
-        0x5be0cd19137e2179
+        const uint64_t initial_values[8] =
+        {
+            0x6a09e667f3bcc908, // the first 64 bits of the fractional parts of the square roots of the first eight prime numbers.
+            0xbb67ae8584caa73b,
+            0x3c6ef372fe94f82b,
+            0xa54ff53a5f1d36f1,
+            0x510e527fade682d1,
+            0x9b05688c2b3e6c1f,
+            0x1f83d9abfb41bd6b,
+            0x5be0cd19137e2179
+        };
+
+        for (unsigned i = 0; i < 8; ++i)
+        {
+            H[i] = initial_values[i];
+        }
     };
 };
 
-template <typename basetype>
-struct SHA512_InitialValueGenerator_Traits
+template <typename basetype, unsigned t>
+struct SHA512Truncated_Traits
 {
     typedef SHA512_Algorithm<basetype> BaseAlgorithm;
 
-    static const unsigned NumberOfHashBits = 512;
+    static const bool isTruncated = true;
 
-    static constexpr uint64_t init[8] =
+    static const unsigned NumberOfHashBits = t;
+
+    static void init(basetype H[8])
     {
-        0x6a09e667f3bcc908 ^ 0xa5a5a5a5a5a5a5a5, // the first 64 bits of the fractional parts of the square roots of the first eight prime numbers.
-        0xbb67ae8584caa73b ^ 0xa5a5a5a5a5a5a5a5, // xorred with 0xa5, repeated.
-        0x3c6ef372fe94f82b ^ 0xa5a5a5a5a5a5a5a5,
-        0xa54ff53a5f1d36f1 ^ 0xa5a5a5a5a5a5a5a5,
-        0x510e527fade682d1 ^ 0xa5a5a5a5a5a5a5a5,
-        0x9b05688c2b3e6c1f ^ 0xa5a5a5a5a5a5a5a5,
-        0x1f83d9abfb41bd6b ^ 0xa5a5a5a5a5a5a5a5,
-        0x5be0cd19137e2179 ^ 0xa5a5a5a5a5a5a5a5
+        const uint64_t initial_values[8] =
+        {
+            0x6a09e667f3bcc908, // the first 64 bits of the fractional parts of the square roots of the first eight prime numbers.
+            0xbb67ae8584caa73b,
+            0x3c6ef372fe94f82b,
+            0xa54ff53a5f1d36f1,
+            0x510e527fade682d1,
+            0x9b05688c2b3e6c1f,
+            0x1f83d9abfb41bd6b,
+            0x5be0cd19137e2179
+        };
+
+        for (unsigned i = 0; i < 8; ++i)
+        {
+            H[i] = initial_values[i] ^ 0xa5a5a5a5a5a5a5a5;
+        }
     };
 };
 
@@ -272,10 +328,7 @@ class SHA2_State
 
         void reset()
         {
-            for (unsigned i = 0; i < 8; ++i)
-            {
-                H[i] = Traits::init[i];
-            }
+            Traits::init(H);
         }
 
         void update(const basetype M[16])
@@ -322,6 +375,12 @@ class SHA2_State
             H[6] += g;
             H[7] += h;
         }
+
+        unsigned getbit(unsigned i) const
+        {
+            assert(i < Traits::BaseAlgorithm::NumberOfStateBits);
+            return (H[i / Traits::BaseAlgorithm::NumberOfBaseTypeBits] >> (Traits::BaseAlgorithm::NumberOfBaseTypeBits - 1 - i % Traits::BaseAlgorithm::NumberOfBaseTypeBits)) & 1;
+        }
 };
 
 template <typename Traits>
@@ -329,7 +388,7 @@ class SHA2
 {
     private:
 
-        SHA2_State<Traits> sha_state;
+        SHA2_State<Traits> state;
 
         typedef typename Traits::BaseAlgorithm::basetype basetype;
 
@@ -337,19 +396,43 @@ class SHA2
 
         uint64_t bitcount;
 
+        bool finalized;
+
     public:
 
-        SHA2() : bitcount(0) {}
+        SHA2()
+        {
+            reset();
+        }
 
         void reset()
         {
-            sha_state.reset();
+            state.reset();
 
             bitcount = 0;
+            finalized = false;
+
+            std::cout << "Hello" << std::endl;
+
+            if (Traits::isTruncated)
+            {
+                std::string name = "SHA-512/" + std::to_string(Traits::NumberOfHashBits);
+
+                add_bytes(reinterpret_cast<const uint8_t *>(name.c_str()), name.size());
+                finalize();
+
+                // The state is now correct for the SHA-512/t code.
+                // We may proceed.
+
+                bitcount = 0;
+                finalized = false;
+            }
         }
 
         void add_bit(unsigned bit)
         {
+            assert(!finalized);
+
             // Shift the message bits ...
             for (unsigned i = 0; i < 16; ++i)
             {
@@ -369,12 +452,14 @@ class SHA2
 
             if (bitcount % Traits::BaseAlgorithm::BlockBits == 0)
             {
-                sha_state.update(M);
+                state.update(M);
             }
         }
 
         void add_byte(const uint8_t byte)
         {
+            assert(!finalized);
+
             for (unsigned i = 0; i < 8; ++i)
             {
                 add_bit((byte >> (7 - i)) & 1);
@@ -383,6 +468,8 @@ class SHA2
 
         void add_bytes(const uint8_t * bytes, const std::size_t num_bytes)
         {
+            assert(!finalized);
+
             for (std::size_t i = 0; i < num_bytes; ++i)
             {
                 add_byte(bytes[i]);
@@ -391,6 +478,8 @@ class SHA2
 
         void finalize()
         {
+            assert(!finalized);
+
             const uint64_t num_data_bits = bitcount;
 
             const unsigned NumberOfSizeBits = 8 * sizeof(uint64_t);
@@ -406,27 +495,42 @@ class SHA2
             {
                 add_bit((num_data_bits >> (NumberOfSizeBits - 1 - i)) & 1);
             }
+
+            finalized = true;
         }
 
-        std::string state() const
+        std::string hex() const
         {
-            std::ostringstream oss;
+            std::vector<char> v;
 
-            oss << std::hex << std::setfill('0');
-
-            static_assert(Traits::NumberOfHashBits % Traits::BaseAlgorithm::NumberOfBaseTypeBits == 0, "Should be divisible.");
-
-            const unsigned ShowWords = Traits::NumberOfHashBits / Traits::BaseAlgorithm::NumberOfBaseTypeBits;
-
-            for (unsigned i = 0; i < ShowWords; ++i)
+            for (unsigned i = 0; i < Traits::NumberOfHashBits; ++i)
             {
-                const unsigned nibbles = 2 * sizeof(basetype);
-
-                oss << std::setw(nibbles) << sha_state.H[i];
+                v.push_back(state.getbit(i));
             }
 
-            return oss.str();
+            std::reverse(v.begin(), v.end());
+            while (v.size() % 4 != 0)
+            {
+                v.push_back(0);
+            }
+
+            std::string hex_string;
+
+            while (!v.empty())
+            {
+                unsigned vv = 0;
+                for (unsigned i = 0; i < 4; ++i)
+                {
+                    vv = vv * 2 + v.back();
+
+                    v.pop_back();
+                }
+
+                hex_string.append(1, "0123456789abcdef"[vv]);
+            }
+
+            return hex_string;
         }
 };
 
-#endif // sha_256_h
+#endif // sha2_h
