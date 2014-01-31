@@ -43,14 +43,14 @@ namespace // anonymous namespace
 };
 
 template <typename Basetype>
-struct SHA256_Algorithm
+struct BaseAlgorithm_SHA256
 {
     typedef Basetype basetype;
 
     static const unsigned NumberOfRounds = 64;
 
-    static const unsigned BlockBits = 512;
-    static const unsigned SizeBits  =  64;
+    static const unsigned NumberOfBlockBits = 512;
+    static const unsigned NumberOfSizeBits  =  64;
 
     static const unsigned NumberOfBaseTypeBits = 32;
     static const unsigned NumberOfStateBits    = 256;
@@ -79,7 +79,7 @@ struct SHA256_Algorithm
 };
 
 template <typename basetype>
-const basetype SHA256_Algorithm<basetype>::K[64] =
+const basetype BaseAlgorithm_SHA256<basetype>::K[64] =
 {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
     0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -100,14 +100,14 @@ const basetype SHA256_Algorithm<basetype>::K[64] =
 };
 
 template <typename Basetype>
-struct SHA512_Algorithm
+struct BaseAlgorithm_SHA512
 {
     typedef Basetype basetype;
 
     static const unsigned NumberOfRounds = 80;
 
-    static const unsigned BlockBits = 1024;
-    static const unsigned SizeBits  =  128;
+    static const unsigned NumberOfBlockBits = 1024;
+    static const unsigned NumberOfSizeBits  =  128;
 
     static const unsigned NumberOfBaseTypeBits = 64;
     static const unsigned NumberOfStateBits    = 512;
@@ -136,7 +136,7 @@ struct SHA512_Algorithm
 };
 
 template <typename basetype>
-const basetype SHA512_Algorithm<basetype>::K[80] =
+const basetype BaseAlgorithm_SHA512<basetype>::K[80] =
 {
     0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
     0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118,
@@ -163,7 +163,7 @@ const basetype SHA512_Algorithm<basetype>::K[80] =
 template <typename basetype>
 struct SHA224_Traits
 {
-    typedef SHA256_Algorithm<basetype> BaseAlgorithm;
+    typedef BaseAlgorithm_SHA256<basetype> BaseAlgorithm;
 
     static const unsigned NumberOfHashBits = 224;
 
@@ -193,7 +193,7 @@ struct SHA224_Traits
 template <typename basetype>
 struct SHA256_Traits
 {
-    typedef SHA256_Algorithm<basetype> BaseAlgorithm;
+    typedef BaseAlgorithm_SHA256<basetype> BaseAlgorithm;
 
     static const bool isTruncated = false;
 
@@ -223,7 +223,7 @@ struct SHA256_Traits
 template <typename basetype>
 struct SHA384_Traits
 {
-    typedef SHA512_Algorithm<basetype> BaseAlgorithm;
+    typedef BaseAlgorithm_SHA512<basetype> BaseAlgorithm;
 
     static const bool isTruncated = false;
 
@@ -253,7 +253,7 @@ struct SHA384_Traits
 template <typename basetype>
 struct SHA512_Traits
 {
-    typedef SHA512_Algorithm<basetype> BaseAlgorithm;
+    typedef BaseAlgorithm_SHA512<basetype> BaseAlgorithm;
 
     static const bool isTruncated = false;
 
@@ -281,9 +281,9 @@ struct SHA512_Traits
 };
 
 template <typename basetype, unsigned t>
-struct SHA512Truncated_Traits
+struct SHA512_Truncated_Traits
 {
-    typedef SHA512_Algorithm<basetype> BaseAlgorithm;
+    typedef BaseAlgorithm_SHA512<basetype> BaseAlgorithm;
 
     static const bool isTruncated = true;
 
@@ -376,6 +376,8 @@ class SHA2_State
             H[7] += h;
         }
 
+        // Get a single state bit. The MSB of state word 0 is the 0'th bit.
+
         unsigned getbit(unsigned i) const
         {
             assert(i < Traits::BaseAlgorithm::NumberOfStateBits);
@@ -383,8 +385,27 @@ class SHA2_State
         }
 };
 
+class SHA2_Processor
+{
+    public:
+
+        virtual ~SHA2_Processor() {};
+
+        virtual void reset() = 0;
+
+        virtual void add_bit(unsigned bit) = 0;
+
+        virtual void add_byte(const uint8_t byte) = 0;
+
+        virtual void add_bytes(const uint8_t * bytes, const std::size_t num_bytes) = 0;
+
+        virtual void finalize() = 0;
+
+        virtual std::string hex() const = 0;
+};
+
 template <typename Traits>
-class SHA2
+class SHA2: public SHA2_Processor
 {
     private:
 
@@ -405,14 +426,27 @@ class SHA2
             reset();
         }
 
-        void reset()
+        virtual ~SHA2()
+        {
+            if (false)
+            {
+                std::cout << "ending SHA-" << Traits::BaseAlgorithm::NumberOfStateBits;
+
+                if (Traits::isTruncated)
+                {
+                    std::cout << "/" << Traits::NumberOfHashBits;
+                }
+
+                std::cout << std::endl;
+            }
+        }
+
+        virtual void reset()
         {
             state.reset();
 
             bitcount = 0;
             finalized = false;
-
-            std::cout << "Hello" << std::endl;
 
             if (Traits::isTruncated)
             {
@@ -429,7 +463,7 @@ class SHA2
             }
         }
 
-        void add_bit(unsigned bit)
+        virtual void add_bit(unsigned bit)
         {
             assert(!finalized);
 
@@ -450,13 +484,24 @@ class SHA2
 
             ++bitcount;
 
-            if (bitcount % Traits::BaseAlgorithm::BlockBits == 0)
+            if (bitcount % Traits::BaseAlgorithm::NumberOfBlockBits == 0)
             {
+                if (false)
+                {
+                    std::cout << ">>>" << std::hex;
+                    for (unsigned i = 0; i < 16; ++i)
+                    {
+                        std::cout << " " << M[i];
+                    }
+                    std::cout << std::endl;
+                    std::cout << std::dec;
+                }
+
                 state.update(M);
             }
         }
 
-        void add_byte(const uint8_t byte)
+        virtual void add_byte(const uint8_t byte)
         {
             assert(!finalized);
 
@@ -466,7 +511,7 @@ class SHA2
             }
         }
 
-        void add_bytes(const uint8_t * bytes, const std::size_t num_bytes)
+        virtual void add_bytes(const uint8_t * bytes, const std::size_t num_bytes)
         {
             assert(!finalized);
 
@@ -476,57 +521,69 @@ class SHA2
             }
         }
 
-        void finalize()
+        virtual void finalize()
         {
             assert(!finalized);
 
             const uint64_t num_data_bits = bitcount;
 
-            const unsigned NumberOfSizeBits = 8 * sizeof(uint64_t);
-
             add_bit(1);
 
-            while (bitcount % Traits::BaseAlgorithm::BlockBits != Traits::BaseAlgorithm::BlockBits - NumberOfSizeBits)
+            while (bitcount % Traits::BaseAlgorithm::NumberOfBlockBits != Traits::BaseAlgorithm::NumberOfBlockBits - Traits::BaseAlgorithm::NumberOfSizeBits)
             {
                 add_bit(0);
             }
 
-            for (unsigned i = 0; i < NumberOfSizeBits; ++i)
+            for (unsigned i = 0; i < Traits::BaseAlgorithm::NumberOfSizeBits; ++i)
             {
-                add_bit((num_data_bits >> (NumberOfSizeBits - 1 - i)) & 1);
+                const unsigned shift = Traits::BaseAlgorithm::NumberOfSizeBits - 1 - i;
+
+                if (shift >= 8 * sizeof(num_data_bits))
+                {
+                    //std::cout << "[1] adding bit 0" << std::endl;
+                    add_bit(0);
+                }
+                else
+                {
+                    //std::cout << "[2] adding bit " << ((num_data_bits >> shift) & 1) << std::endl;
+                    add_bit((num_data_bits >> (Traits::BaseAlgorithm::NumberOfSizeBits - 1 - i)) & 1);
+                }
             }
 
             finalized = true;
         }
 
-        std::string hex() const
+        virtual std::string hex() const
         {
-            std::vector<char> v;
+            assert(finalized);
+
+            std::vector<char> bitvec;
 
             for (unsigned i = 0; i < Traits::NumberOfHashBits; ++i)
             {
-                v.push_back(state.getbit(i));
+                bitvec.push_back(state.getbit(i));
             }
 
-            std::reverse(v.begin(), v.end());
-            while (v.size() % 4 != 0)
+            std::reverse(bitvec.begin(), bitvec.end());
+
+            while (bitvec.size() % 4 != 0)
             {
-                v.push_back(0);
+                bitvec.push_back(0);
             }
 
             std::string hex_string;
 
-            while (!v.empty())
+            while (!bitvec.empty())
             {
-                unsigned vv = 0;
+                unsigned hexval = 0;
                 for (unsigned i = 0; i < 4; ++i)
                 {
-                    vv = vv * 2 + v.back();
+                    hexval = hexval * 2 + bitvec.back();
 
-                    v.pop_back();
+                    bitvec.pop_back();
                 }
 
-                hex_string.append(1, "0123456789abcdef"[vv]);
+                hex_string.append(1, "0123456789abcdef"[hexval]);
             }
 
             return hex_string;
