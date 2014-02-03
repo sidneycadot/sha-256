@@ -415,7 +415,7 @@ class SHA2: public SHA2_Processor
 
         basetype M[16]; // message buffer
 
-        uint64_t bitcount;
+        uint64_t bitcount; // Note: for SHA2-512, SHA-384, and SHA-512/t, this should be a 128-bit integer!
 
         bool finalized;
 
@@ -428,17 +428,7 @@ class SHA2: public SHA2_Processor
 
         virtual ~SHA2()
         {
-            if (false)
-            {
-                std::cout << "ending SHA-" << Traits::BaseAlgorithm::NumberOfStateBits;
-
-                if (Traits::isTruncated)
-                {
-                    std::cout << "/" << Traits::NumberOfHashBits;
-                }
-
-                std::cout << std::endl;
-            }
+            // empty block
         }
 
         virtual void reset()
@@ -450,6 +440,8 @@ class SHA2: public SHA2_Processor
 
             if (Traits::isTruncated)
             {
+                // Handle the SHA-512/t codes
+
                 std::string name = "SHA-512/" + std::to_string(Traits::NumberOfHashBits);
 
                 add_bytes(reinterpret_cast<const uint8_t *>(name.c_str()), name.size());
@@ -467,12 +459,13 @@ class SHA2: public SHA2_Processor
         {
             assert(!finalized);
 
-            // Shift the message bits ...
+            const unsigned SignBit = Traits::BaseAlgorithm::NumberOfBaseTypeBits - 1;
+
+           // Shift the message bits ...
             for (unsigned i = 0; i < 16; ++i)
             {
                 if (i < 15)
                 {
-                    const unsigned SignBit = Traits::BaseAlgorithm::NumberOfBaseTypeBits - 1;
 
                     M[i] = (M[i] << 1) | (M[i + 1] >> SignBit);
                 }
@@ -486,17 +479,6 @@ class SHA2: public SHA2_Processor
 
             if (bitcount % Traits::BaseAlgorithm::NumberOfBlockBits == 0)
             {
-                if (false)
-                {
-                    std::cout << ">>>" << std::hex;
-                    for (unsigned i = 0; i < 16; ++i)
-                    {
-                        std::cout << " " << M[i];
-                    }
-                    std::cout << std::endl;
-                    std::cout << std::dec;
-                }
-
                 state.update(M);
             }
         }
@@ -540,12 +522,10 @@ class SHA2: public SHA2_Processor
 
                 if (shift >= 8 * sizeof(num_data_bits))
                 {
-                    //std::cout << "[1] adding bit 0" << std::endl;
                     add_bit(0);
                 }
                 else
                 {
-                    //std::cout << "[2] adding bit " << ((num_data_bits >> shift) & 1) << std::endl;
                     add_bit((num_data_bits >> (Traits::BaseAlgorithm::NumberOfSizeBits - 1 - i)) & 1);
                 }
             }
